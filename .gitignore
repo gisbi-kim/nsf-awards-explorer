@@ -1,0 +1,18 @@
+# Raw data files: large (~30 MB each), regenerable from API on demand.
+# Skip data/raw/ from version control to keep the repo small.
+data/raw/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp

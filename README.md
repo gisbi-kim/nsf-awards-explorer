@@ -1,7 +1,7 @@
 # NSF Awards Explorer · FY2016 – FY2026
 
-> Interactive EDA dashboard for **120,075 NSF awards** ($31B+ visible) across 11 fiscal years.
-> Single self-contained HTML, fully offline-capable, ~6 MB.
+> Interactive EDA dashboard for **120,075 NSF awards** across 11 fiscal years.
+> Single self-contained HTML, fully offline-capable, ~21 MB.
 
 [![Live](https://img.shields.io/badge/Live-Dashboard-2563eb?style=flat-square)](https://gisbi-kim.github.io/nsf-awards-explorer/)
 [![Data](https://img.shields.io/badge/Data-api.nsf.gov-10b981?style=flat-square)](https://api.nsf.gov/services/v1/awards.json)
@@ -14,109 +14,147 @@
 
 ## ✨ What it is
 
-A one-shot interactive EDA dashboard for the **U.S. National Science Foundation** awards database. All data and analysis baked into a single HTML file — no backend, no CDN, works offline once loaded.
+One-shot interactive EDA dashboard for the **U.S. National Science Foundation** awards database. All data + charts baked into a single HTML — no backend, no CDN, works offline once loaded.
 
-Built to answer questions like:
-- *Which institutions actually dominate NSF funding, and why?*
-- *Has the keyword "climate" really been deprioritized? By how much?*
-- *What's the typical CAREER award size by directorate?*
-- *Where are robotics grants concentrated, and what is the trend?*
-- *How unequal is NSF funding distribution? (Spoiler: Gini = 0.605)*
+**8 tabs**, all charts custom-built inline SVG (no Chart.js / D3):
 
----
-
-## 📑 Tabs
-
-| Tab | What you'll find |
+| Tab | Contents |
 |---|---|
-| 📊 **Overview** | Yearly bar charts, headline metrics, top 5 findings |
-| 🏛️ **Institutions** | Top 20 by count + by $$, interactive **US tile map** with count/funding toggle |
-| 🏷️ **Prefixes** | Glossary of every NSF program prefix (CAREER, EAGER, RAPID, REU, MRI…), Top 15 charts, FY × prefix heatmap, CAREER deep dive, duration histogram |
-| 📚 **Directorate** | Abbreviation reference (MPS, CSE, ENG, GEO, EDU, BIO, TIP, SBE…), donut chart, TIP (2022 new directorate) deep dive |
-| 🤖 **Robotics** | Robotics keyword trend (FY2016-2026), Top 100 institutions chart + table |
-| 💸 **Funding Shape** | Power-law histogram (log-scale), Lorenz curve (Gini = 0.605), grant size distribution by bucket |
-| 🔍 **Keywords** | 27 keyword trends across 11 years (climate, AI, LLM, quantum, blockchain, fairness, …) with mini bar charts |
-| 🔎 **Robotics Browser** | Searchable embedded table of **6,369 robotics-related awards** with full metadata + abstract preview + click-to-expand modal |
+| 📊 Overview | Yearly bars + key metrics + headline findings |
+| 🏛️ Institutions | Top 20 (count + $$), interactive **US tile map** |
+| 🏷️ Prefixes | Glossary of all NSF program prefixes (CAREER, EAGER, RAPID, REU, MRI…), Top 15 charts, FY heatmap, CAREER deep dive, duration histogram |
+| 📚 Directorate | Abbreviation reference, donut chart, TIP (2022-new) deep dive |
+| 🤖 Robotics | Yearly trend line, **Top 100 institutions** chart + table |
+| 💸 Funding Shape | Power-law histogram, **Lorenz curve** (Gini = 0.605), distribution buckets |
+| 🔍 Keywords | 27 keyword trends across 11 years (climate, AI, LLM, quantum…) |
+| 🔎 Robotics Browser | **Searchable embedded table** of 6,369 robotics awards · click for full abstract · shareable URLs |
+
+🔗 **Shareable URLs** — every tab + browser filter state is encoded in the URL hash:
+- `#robotics` — robotics tab
+- `#browser?q=Xiao` — browser tab pre-filtered by name
+- `#browser?q=SLAM&fy=2024` — search "SLAM" in FY2024
+- `#browser?px=CAREER&dir=CSE` — CAREER awards in CSE directorate
 
 ---
 
 ## 🎯 Headline findings
 
-1. **"climate" funding fell 71% in FY2025** (1,428 → 417 keyword mentions) — strongest political-alignment signal in the dataset
-2. **"AI" mentions +90%** while "machine learning" stayed flat — AI replaced ML as the broader buzzword
-3. **NSF funding is highly unequal**: Gini = 0.605, top 1% of grants take 27% of total $$, top 10% take 51%
-4. **UT Austin's $$ ranking is dominated by a single $457M LCCF supercomputer grant** (58% of their 11-year total). Without it, they would rank around #6-7
-5. **Robotics funding peaked FY2020-2021, declining since** (706 → 612 awards by FY2025, -13%)
-6. **"LLM" and "foundation model" appeared from FY2023** — 0 mentions before, now ~80/year
-7. **MRI (Major Research Instrumentation) grants collapsed** — 146 → 6 from FY2022 to FY2026, suggesting infrastructure budget pressure
-8. **TIP** (Technology, Innovation & Partnerships, the 2022-new directorate) already exceeds BIO in funding share
+1. **"climate" funding fell 71% in FY2025** — strongest political-alignment signal
+2. **"AI" mentions +90%** while "machine learning" stayed flat
+3. **NSF Gini = 0.605** — top 1% of grants take 27% of total $$
+4. **UT Austin's $$ #1 rank dominated by single $457M LCCF supercomputer grant** (58% of their 11-yr total)
+5. **Robotics funding peaked FY2020-2021, declining since** (-13% by FY2025)
+6. **"LLM" / "foundation model" appeared from FY2023** — 0 → ~80/year
+7. **MRI (instrumentation) collapsed**: 146 → 6 from FY2022 to FY2026
+8. **TIP** (2022 new directorate) already exceeds BIO in funding
 
 ---
 
-## 📡 Data source & methodology
-
-**Source:** [api.nsf.gov/services/v1/awards.json](https://api.nsf.gov/services/v1/awards.json)
-
-**Why API instead of CSV/JSON dump?** The official `nsf.gov/awardsearch/download.jsp` page was redesigned (early 2025) and now shows "No export files available at this time" because of the SPA migration. The REST API at `api.nsf.gov` remains stable and well-documented.
-
-**API quirk we worked around:** Single-query results are silently capped at **9,000 records** per date window, even though the `totalCount` metadata can exceed that (showing `10000` for any larger result). Solution: split each fiscal year into **4 quarters** and fetch each separately, then dedupe by award ID. This recovers ~3,000 awards per year that would otherwise be lost.
-
-**Pipeline:**
-1. **Fetch raw** per FY: 4 quarterly queries → merge by award ID → 65-68 column raw `xlsx`
-2. **Slim transform**: extract 22 essential columns + parse `program_prefix` from title regex + add NSF award URL
-3. **Robotics filter**: strict regex matching `robot|robotic|slam|teleoperation|autonomous (vehicle|driving|mobility)|self-driving|legged locomotion|motion planning|robot learning|manipulator arm|robot manipulation`. Excludes ambiguous singular words like `navigation` (oceanography), `manipulation` (chemistry), `embodied` (cognitive science) which over-match in non-robotics fields
-4. **Build HTML**: inline SVG charts (custom-built helpers — no Chart.js/D3 dependency), tile-grid US map, vanilla-JS searchable table
-
-**Robotics dataset size:** 6,369 awards out of 120,075 total (5.3%)
-
----
-
-## 🗂️ Repo contents
+## 📁 Repo structure
 
 ```
 nsf-awards-explorer/
-├── index.html          # 6.2 MB self-contained dashboard
-├── README.md           # this file
-└── .nojekyll           # disable Jekyll processing for faster Pages serving
+├── index.html                  # 21 MB self-contained dashboard
+├── README.md
+├── .nojekyll                   # disable Jekyll for faster Pages serving
+├── .gitignore
+├── update.ps1                  # Windows pipeline runner (Docker)
+├── update.sh                   # macOS/Linux pipeline runner (Docker)
+├── scripts/
+│   ├── run_pipeline.py         # ★ orchestrator — fetch + slim + robotics + HTML
+│   ├── fetch_nsf_awards.py     # NSF API → raw xlsx (one FY)
+│   ├── make_slim_xlsx.py       # raw → slim 22-col xlsx (one FY)
+│   ├── extract_robotics.py     # filter robotics-only across all years
+│   ├── build_html_report.py    # build the dashboard HTML
+│   └── chart_helpers.py        # inline SVG chart helpers
+└── data/
+    ├── slim/                   # ★ committed — processed per-FY xlsx (22 columns each)
+    │   └── nsf_awards_FY{2016..2026}_slim.xlsx
+    ├── raw/                    # gitignored — large raw API responses (~30 MB each)
+    └── nsf_robotics_awards_all_years.xlsx   # 6,369 robotics-only awards across all FYs
 ```
 
-The dashboard HTML embeds all data inline — robotics-browser data alone is ~4.3 MB JSON. No external network calls except the optional NSF Award detail page links (clicking ↗ in the browser opens nsf.gov in a new tab).
+The **slim xlsx files are version-controlled** so anyone can rerun the analysis without re-querying the NSF API. Raw files (gitignored) are regenerated on demand by the pipeline.
 
 ---
 
 ## 🔄 Updating the dashboard
 
-Pipeline source code lives in [the analysis project](https://github.com/) (private). Once new data is regenerated, update the dashboard with:
+**Prerequisite**: Docker Desktop running.
 
+### Add a new fiscal year
+```powershell
+# Windows
+.\update.ps1 2027
+git add . ; git commit -m "Add FY2027" ; git push
+```
 ```bash
-git -C nsf-awards-explorer pull
-cp /path/to/output/nsf_eda_report_FY2016-2026.html nsf-awards-explorer/index.html
-git -C nsf-awards-explorer add index.html
-git -C nsf-awards-explorer commit -m "Refresh dashboard"
-git -C nsf-awards-explorer push
+# macOS/Linux
+./update.sh 2027
+git add . && git commit -m "Add FY2027" && git push
 ```
 
-GitHub Pages auto-rebuilds within ~30 seconds.
+### Refresh current year (FY in progress)
+```powershell
+.\update.ps1                 # default = current FY (computed from system date)
+```
+
+### Refresh multiple years
+```powershell
+.\update.ps1 2024 2025 2026
+```
+
+### Rebuild HTML only (no API calls)
+Useful after editing `scripts/build_html_report.py`:
+```powershell
+.\update.ps1 --html-only
+```
+
+### Refetch everything from scratch (slow!)
+```powershell
+.\update.ps1 --all           # ~35 minutes for 11 years
+```
+
+### Force-refetch a single FY
+```bash
+rm data/raw/nsf_awards_FY2026.xlsx
+./update.sh 2026
+```
+
+The pipeline skips the slow API fetch step if `data/raw/nsf_awards_FYXXXX.xlsx` already exists, so re-runs are cheap. Delete the raw file to force a refetch.
+
+---
+
+## 📡 Data source & methodology
+
+**Source**: [api.nsf.gov/services/v1/awards.json](https://api.nsf.gov/services/v1/awards.json)
+
+**API quirk we work around**: a single query is silently capped at **9,000 records**, even though the `totalCount` metadata can show higher numbers. Solution: fetch each FY in **4 quarterly windows** (Oct-Dec, Jan-Mar, Apr-Jun, Jul-Sep) and dedupe by award ID. This recovers ~3,000 awards per year that would otherwise be lost.
+
+**Pipeline stages**:
+1. **Fetch raw** per FY (`fetch_nsf_awards.py`): 4 quarterly queries → merge → 65–68 column raw xlsx
+2. **Slim** (`make_slim_xlsx.py`): pick 22 useful columns + parse `program_prefix` from title regex + add NSF award URL
+3. **Robotics filter** (`extract_robotics.py`): strict regex matching `robot|robotic|slam|teleoperation|autonomous (vehicle|driving|mobility)|self-driving|legged locomotion|motion planning|robot learning|manipulator arm|robot manipulation`. Excludes ambiguous singles (`navigation`, `manipulation`, `embodied`, `drone`, `actuator`, `grasping`) which over-match in non-robotics fields
+4. **Build HTML** (`build_html_report.py`): inline SVG charts + tile-grid US map + vanilla-JS searchable browser
 
 ---
 
 ## ⚖️ License & attribution
 
-- **Code & analysis**: MIT License (free to fork, modify, redistribute)
-- **Data**: U.S. Government work under NSF — public domain. Attribute the National Science Foundation for any reuse of award data
-- **Charts/visualizations**: CC BY 4.0 — attribution requested
-
-If you build something interesting from this dataset, please open an issue and link back. Happy to feature derivative work.
+- **Code**: MIT License — free to fork, modify, redistribute
+- **NSF data**: U.S. Government work — public domain. Attribute the National Science Foundation for any reuse
+- **Visualizations**: CC BY 4.0 — attribution requested
 
 ---
 
 ## 🛠️ Tech notes
 
-- **No external dependencies**: zero CDN calls, no Chart.js/D3/Plotly — all charts hand-rolled in inline SVG (~200 lines of Python helpers)
-- **Tile-grid US map**: 13×8 CSS grid with state postal codes, log-scale color, hover tooltip, mode toggle (count vs funding $)
-- **Searchable browser**: vanilla JS with sticky-header sortable table, instant client-side filter (no backend), 6,369 rows × 7 columns, click row → modal with full metadata + abstract preview + NSF page link
-- **Mobile responsive**: tables scroll horizontally, charts auto-fit to viewport
-- **Korean + English mixed**: Pretendard / Noto Sans KR / system font stack
+- **Zero external runtime deps**: no CDN, no Chart.js / D3 / Plotly — all charts hand-rolled in inline SVG (~300 lines of Python in `chart_helpers.py`)
+- **Tile-grid US map**: 13×8 CSS grid, log-scale color, hover tooltip, count/funding toggle
+- **Searchable browser**: vanilla JS, sticky-header sortable table, instant client-side filter, 6,369 rows × 7 cols, click row → modal with full abstract + NSF page link
+- **URL-based state**: tabs + filters persist in `location.hash` for shareable links
+- **Mobile responsive**: tables scroll horizontally, charts auto-fit viewport
+- **Build deps**: Python 3.12 + pandas + openpyxl + numpy (Docker-isolated, no host install needed)
 
 ---
 
